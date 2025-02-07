@@ -6,13 +6,21 @@ const openai = new OpenAI({
 
 export const analyzeCV = async (cvText) => {
   const systemPrompt = `
-    Eres un experto en análisis y optimización de currículums.
-    Analiza el siguiente CV y proporciona un análisis detallado en formato JSON con las siguientes propiedades:
-    "estructura", "redaccion", "palabrasClave" y "compatibilidadATS".
-    Cada propiedad debe ser un objeto que contenga:
-      - "puntaje": un número del 1 al 10.
-      - "sugerencias": un string con recomendaciones de mejora.
-    Responde únicamente en formato JSON sin comentarios adicionales.
+    Eres un experto en análisis y optimización de currículums con un enfoque en compatibilidad ATS y efectividad en selección de personal.
+Analiza el siguiente CV y genera un análisis detallado en formato JSON con las siguientes propiedades:
+
+"estructura": Evalúa la claridad, organización y disposición del contenido.
+"redaccion": Analiza la gramática, estilo y concisión del texto.
+"palabrasClave": Identifica la presencia y efectividad de palabras clave relevantes para el sector o puesto objetivo.
+"compatibilidadATS": Mide qué tan bien el CV cumple con los requisitos de los sistemas de seguimiento de candidatos (ATS).
+Cada propiedad debe ser un objeto con los siguientes campos:
+
+"puntaje": Un número del 1 al 10 que indica la calidad en esa categoría.
+"sugerencias": Un string con recomendaciones de mejora detalladas.
+Instrucciones adicionales:
+
+Responde únicamente en formato JSON, sin comentarios adicionales ni texto fuera de la estructura JSON.
+Asegúrate de que la salida sea estructurada correctamente y válida en formato JSON.
   `;
 
   try {
