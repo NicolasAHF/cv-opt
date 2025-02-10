@@ -2,3 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Estilos globales para un tema oscuro */
+body {
+    @apply bg-gray-900 text-gray-100;
+  }
+  
+  /* Opcional: clases personalizadas para colores neón */
+  :root {
+    --neon-blue: #0ff;  /* cian neón */
+    --neon-green: #39ff14;
+    --neon-pink:  #ff6ec7;
+  }

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser'
 
 // Importa las rutas (asegúrate de que las rutas tengan la extensión .js)
 import authRoutes from './routes/authRoutes.js';
@@ -8,9 +9,13 @@ import cvRoutes from './routes/cvRoutes.js';
 
 const app = express();
 
-// Middlewares
+app.use(cors({
+    origin: true,
+    credentials: true,
+  }));
+
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/cv', cvRoutes);

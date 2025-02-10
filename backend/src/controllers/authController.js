@@ -12,26 +12,21 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: 'Email y contraseña son requeridos' });
     }
 
-    // Verificar si ya existe un usuario con ese email (usamos maybeSingle para no lanzar error)
-    const { data: existingUser, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (existingUser) {
-      return res.status(400).json({ message: 'El usuario ya existe' });
-    }
-
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Insertar el usuario y solicitar que se retorne la representación
+    // Intentar insertar directamente y manejar el error si el usuario ya existe
     const { data: newUser, error: insertError } = await supabase
       .from('users')
-      .insert([{ email, password: hashedPassword }], { returning: 'representation' })
+      .insert([{ email, password: hashedPassword }])
+      .select()
       .single();
 
-    if (insertError || !newUser) {
+    // Manejar el error de unique constraint
+    if (insertError) {
+      // Si el error es por violación de unique constraint
+      if (insertError.code === '23505') {
+        return res.status(400).json({ message: 'El usuario ya existe' });
+      }
       console.error('Error al insertar usuario:', insertError);
       return res.status(500).json({ message: 'Error al crear el usuario' });
     }

@@ -1,8 +1,7 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Plus, FileText, Loader2, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
   const [cvList, setCvList] = useState([]);
@@ -25,47 +24,80 @@ const Dashboard = () => {
   }, [token]);
 
   if (loading) {
-    return <div className="text-center mt-10 text-lg">Cargando...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-neon-blue" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Mis Currículums</h1>
-      <div className="flex justify-end mb-6">
-        <Link
-          to="/upload"
-          className="bg-blue-500 text-white px-6 py-3 rounded transition-transform transform hover:scale-105 hover:bg-blue-600"
-        >
-          Subir Nuevo CV
-        </Link>
-      </div>
-      {cvList.length === 0 ? (
-        <p className="text-center text-xl">No tienes CVs analizados aún.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cvList.map((cv, index) => (
-            <motion.div
-              key={cv.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.4 }}
-            >
-              <div className="bg-white p-6 rounded-lg shadow hover:shadow-xl transition-shadow">
-                <h2 className="font-semibold text-xl mb-2">CV #{cv.id.substring(0, 8)}</h2>
-                <p className="text-gray-600 mb-3">
-                  Fecha: {new Date(cv.created_at).toLocaleDateString()}
-                </p>
-                <Link
-                  to={`/cv/${cv.id}`}
-                  className="text-blue-500 hover:underline font-medium"
-                >
-                  Ver detalles
-                </Link>
-              </div>
-            </motion.div>
-          ))}
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 pt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-blue to-neon-pink text-transparent bg-clip-text">
+            Mis Currículums
+          </h1>
+          <Link
+            to="/upload"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-black/30 text-neon-blue hover:text-neon-pink border border-neon-blue hover:border-neon-pink rounded-lg transition-all duration-200 backdrop-blur-sm"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Nuevo CV</span>
+          </Link>
         </div>
-      )}
+
+        {cvList.length === 0 ? (
+          <div className="bg-black/30 backdrop-blur-sm rounded-xl border border-gray-800 p-12 text-center">
+            <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-300 mb-2">
+              No tienes CVs analizados aún
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Comienza subiendo tu primer CV para obtener un análisis detallado
+            </p>
+            <Link
+              to="/upload"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-neon-blue to-neon-pink text-white rounded-lg hover:opacity-90 transition-all duration-200"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Subir CV</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {cvList.map((cv) => (
+              <Link
+                to={`/cv/${cv.id}`}
+                key={cv.id}
+                className="group bg-black/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-neon-blue transition-all duration-200 hover:shadow-lg hover:shadow-neon-blue/10"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="text-gray-500 text-sm flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(cv.created_at).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                    <h2 className="text-xl font-semibold text-white group-hover:text-neon-blue transition-colors">
+                      {cv.cv_name || `CV #${cv.id.substring(0, 8)}`}
+                    </h2>
+                    {cv.jobPosition && (
+                      <p className="text-gray-400 text-sm">
+                        {cv.jobPosition}
+                      </p>
+                    )}
+                  </div>
+                  <FileText className="w-5 h-5 text-gray-500 group-hover:text-neon-blue transition-colors" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -6,41 +6,40 @@ import supabase from '../db.js';
 
 const sanitizeString = (str) => str.replace(/\u0000/g, '');
 
-// Función auxiliar para limpiar un objeto JSON recursivamente (opcional)
-const sanitizeObject = (obj) => {
-  // Convertir el objeto a string, remover los caracteres nulos y volver a parsearlo
-  return JSON.parse(JSON.stringify(obj).replace(/\u0000/g, ''));
-};
-
 export const analyzeCV = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No se ha subido ningún archivo' });
     }
-
     const filePath = req.file.path;
     const mimeType = req.file.mimetype;
 
-    // Extraer el texto del CV
+    // Extraer y sanitizar el texto del CV
     let cvText = await extractTextFromFile(filePath, mimeType);
-    // Sanitizar el texto para eliminar caracteres nulos
     cvText = sanitizeString(cvText);
 
-    // Generar el análisis del CV usando la IA
-    let analysisResult = await analyzeCVService(cvText);
-    // Sanitizar el resultado (si es un objeto, limpiamos todos sus strings)
-    analysisResult = sanitizeObject(analysisResult);
+    // Obtener el puesto al que postula y el nombre del CV
+    const jobPosition = req.body.jobPosition || 'No especificado';
+    const cvName = req.body.cvName || `CV ${new Date().toLocaleString()}`;
 
-    // Insertar el análisis en la base de datos, asociándolo al usuario autenticado
+    // Generar el análisis con la IA, pasando el puesto
+    const analysisResult = await analyzeCVService(cvText, jobPosition);
+
+    // Insertar el registro en la base de datos, incluyendo el puesto
     const { data, error } = await supabase
       .from('cv_analyses')
-      .insert([
-        {
-          user_id: req.user.id,
-          cv_text: cvText,
-          analysis_result: analysisResult
-        }
-      ], { returning: 'representation' })
+      .insert(
+        [
+          {
+            user_id: req.user.id,
+            cv_text: cvText,
+            analysis_result: analysisResult,
+            cv_name: cvName,
+            job_position: jobPosition, // Asegúrate de tener esta columna en tu tabla
+          },
+        ],
+        { returning: 'representation' }
+      )
       .single();
 
     if (error) {
@@ -58,11 +57,45 @@ export const analyzeCV = async (req, res) => {
   }
 };
 
+export const analyzeCVTrial = async (req, res) => {
+  try {
+    if (req.cookies && req.cookies.trialUsed) {
+      return res.status(403).json({ message: 'Ya has utilizado el trial. Por favor, inicia sesión o regístrate para continuar.' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se ha subido ningún archivo' });
+    }
+    const filePath = req.file.path;
+    const mimeType = req.file.mimetype;
+
+    let cvText = await extractTextFromFile(filePath, mimeType);
+    cvText = sanitizeString(cvText);
+
+    // Obtener el puesto al que postula
+    const jobPosition = req.body.jobPosition || 'No especificado';
+    const cvName = req.body.cvName || `CV ${new Date().toLocaleString()}`;
+
+    // Pasar el puesto al servicio de análisis
+    const analysisResult = await analyzeCVService(cvText, jobPosition);
+
+    deleteFile(filePath);
+
+    res.cookie('trialUsed', 'true', { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
+
+    res.json({ 
+      analysis: analysisResult, 
+      cvName,
+      jobPosition // Incluir el puesto en la respuesta
+    });
+  } catch (error) {
+    console.error('Error en analyzeCVTrial:', error);
+    res.status(500).json({ message: 'Error al procesar el CV (trial)', error: error.message });
+  }
+};
+
 export const listCVs = async (req, res) => {
   try {
-    // Se asume que el middleware de autenticación asigna el usuario a req.user
     const userId = req.user.id;
-    // Consulta los análisis de CV asociados al usuario
     const { data, error } = await supabase
       .from('cv_analyses')
       .select('*')
@@ -81,12 +114,10 @@ export const listCVs = async (req, res) => {
   }
 };
 
-
 export const getCVDetails = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Buscar el registro de cv_analyses con el id proporcionado
     const { data, error } = await supabase
       .from('cv_analyses')
       .select('*')
