@@ -24,8 +24,10 @@ app.get('/health', (req, res) => {
 // Configurar trust proxy antes de otros middlewares
 app.set('trust proxy', 1);  // Añade esta línea
 
-// Configuración de seguridad básica
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+}));
 
 // Compresión de respuestas
 app.use(compression());
@@ -43,12 +45,13 @@ if (process.env.NODE_ENV !== 'development') {
   app.use(limiter);
 }
 
-// Configuración de CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || true,
+  origin: process.env.FRONTEND_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+  exposedHeaders: ['Authorization'],
+  maxAge: 86400
 }));
 
 // Middlewares de parseo
@@ -59,6 +62,14 @@ app.use(cookieParser());
 // Middleware para logging básico
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
+
+app.use((req, res, next) => {
+  console.log('Request Headers:', req.headers);
+  console.log('Origin:', req.get('origin'));
+  console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
   next();
 });
 
