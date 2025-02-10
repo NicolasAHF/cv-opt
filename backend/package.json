@@ -1,21 +1,54 @@
 {
-  "name": "backend",
+  "name": "cv-opt-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Backend para análisis de CV con IA",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "echo 'No build step needed'",
+    "postinstall": "node -v",
+    "prestart": "node -e \"if(process.env.NODE_ENV==='production' && !process.env.JWT_SECRET) { console.error('Error: JWT_SECRET not set'); process.exit(1); }\"",
+    "prepare": "node -e \"if(process.env.NODE_ENV==='production') { process.exit(0); }\"",
+    "debug": "node --inspect src/index.js",
+    "deploy:railway": "railway up",
+    "logs:railway": "railway logs",
+    "monitor:railway": "railway status"
   },
   "jest": {
     "testEnvironment": "node",
-    "verbose": true
+    "verbose": true,
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/index.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
   },
   "type": "module",
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "cv",
+    "resume",
+    "analysis",
+    "ai",
+    "openai",
+    "supabase"
+  ],
+  "author": "Nicolas AHF",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
     "bcrypt": "^5.1.1",
@@ -23,15 +56,22 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.9.0",
     "multer": "^1.4.5-lts.1",
     "openai": "^4.83.0",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "compression": "^1.7.4"
   },
   "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
     "jest": "^29.7.0",
     "nodemon": "^3.1.9",
+    "prettier": "^3.2.5",
     "supertest": "^7.0.0"
   }
 }
